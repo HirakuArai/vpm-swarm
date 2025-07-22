@@ -1,0 +1,2 @@
+# Hyper-Swarm Bootstrap Prompt (draft)
+# TODO: 5 ロールセル雛形・Dockerfile・kind/Knative マニフェスト要件を記述
