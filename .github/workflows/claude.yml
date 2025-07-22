@@ -1,0 +1,13 @@
+name: Claude Code
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  claude:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@v0
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
