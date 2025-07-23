@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  # Local container registry
+  registry:
+    image: registry:2
+    ports:
+      - "5003:5000"
+    environment:
+      REGISTRY_HTTP_ADDR: "0.0.0.0:5000"
+    volumes:
+      - registry-data:/var/lib/registry
+
+  # Cell services for building
+  planner-build:
+    build:
+      context: ./cells/planner
+      dockerfile: ../../Dockerfile
+    image: localhost:5003/planner-cell:testtag
+    volumes:
+      - ./cells/planner:/app
+    depends_on:
+      - registry
+
+  curator-build:
+    build:
+      context: ./cells/curator
+      dockerfile: ../../Dockerfile
+    image: localhost:5003/curator-cell:testtag
+    volumes:
+      - ./cells/curator:/app
+    depends_on:
+      - registry
+
+  archivist-build:
+    build:
+      context: ./cells/archivist
+      dockerfile: ../../Dockerfile
+    image: localhost:5003/archivist-cell:testtag
+    volumes:
+      - ./cells/archivist:/app
+    depends_on:
+      - registry
+
+  watcher-build:
+    build:
+      context: ./cells/watcher
+      dockerfile: ../../Dockerfile
+    image: localhost:5003/watcher-cell:testtag
+    volumes:
+      - ./cells/watcher:/app
+    depends_on:
+      - registry
+
+  synthesizer-build:
+    build:
+      context: ./cells/synthesizer
+      dockerfile: ../../Dockerfile
+    image: localhost:5003/synthesizer-cell:testtag
+    volumes:
+      - ./cells/synthesizer:/app
+    depends_on:
+      - registry
+
+  # Runtime services (for local testing)
+  planner:
+    image: localhost:5003/planner-cell:testtag
+    ports:
+      - "8001:8000"
+    environment:
+      - PORT=8000
+      - ROLE=planner
+    depends_on:
+      - planner-build
+
+  curator:
+    image: localhost:5003/curator-cell:testtag
+    ports:
+      - "8002:8000"
+    environment:
+      - PORT=8000
+      - ROLE=curator
+    depends_on:
+      - curator-build
+
+  archivist:
+    image: localhost:5003/archivist-cell:testtag
+    ports:
+      - "8003:8000"
+    environment:
+      - PORT=8000
+      - ROLE=archivist
+    depends_on:
+      - archivist-build
+
+  watcher:
+    image: localhost:5003/watcher-cell:testtag
+    ports:
+      - "8004:8000"
+    environment:
+      - PORT=8000
+      - ROLE=watcher
+    depends_on:
+      - watcher-build
+
+  synthesizer:
+    image: localhost:5003/synthesizer-cell:testtag
+    ports:
+      - "8005:8000"
+    environment:
+      - PORT=8000
+      - ROLE=synthesizer
+    depends_on:
+      - synthesizer-build
+
+volumes:
+  registry-data:
