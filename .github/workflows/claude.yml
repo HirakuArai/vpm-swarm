@@ -2,9 +2,12 @@ name: Claude Code
 on:
   issue_comment:
     types: [created]
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
 jobs:
   claude:
-    permissions: write-all
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
