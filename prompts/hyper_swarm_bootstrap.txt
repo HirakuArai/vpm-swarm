@@ -1,2 +1,64 @@
-# Hyper-Swarm Bootstrap Prompt (draft)
-# TODO: 5 ロールセル雛形・Dockerfile・kind/Knative マニフェスト要件を記述
+# Hyper‑Swarm Bootstrap Prompt (Phase‑0)
+
+## 目的
+
+kind + Knative 上で **5 ロールセル**（planner / curator / archivist / watcher / synthesizer）が 1 周サイクル動く PoC を生成する。
+
+---
+
+## 生成対象
+
+1. **cells/**
+
+```
+cells/
+ ├─ planner/
+ │   └─ main.py
+ ├─ curator/
+ │   └─ main.py
+ ├─ archivist/
+ │   └─ main.py
+ ├─ watcher/
+ │   └─ main.py
+ └─ synthesizer/
+     └─ main.py
+```
+
+* 各 **main.py** は `FastAPI` + `asyncio` で非同期ループを実装。
+* `if __name__ == "__main__":` ブロックで `uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))` を起動。
+
+2. **Dockerfile**（各セル共通）
+
+```Dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY main.py /app/
+RUN pip install fastapi uvicorn
+CMD ["python", "main.py"]
+```
+
+3. **infra/kind-dev/registry.yaml**
+
+* localhost:5003 を含む local registry 定義。
+
+4. **infra/k8s/overlays/dev/<role>-ksvc.yaml**
+
+* Knative Service。`image: localhost:5003/<role>-cell:testtag`。
+* `imagePullPolicy: Never`。
+
+5. **docker-compose.yml**
+
+* 5 build 用コンテナ + local registry を定義。
+* volumes は単純なマッピング。Go template 展開は不要。
+
+6. **tests/e2e/test\_smoke.py**
+
+* planner‑cell に HTTP GET → 200 OK を確認するスモークテスト。
+
+---
+
+## 追加条件
+
+* 全ファイル UTF‑8。
+* コメントは簡潔、各ファイル 120 行以内。
+* **README.md** に “Docker Compose で build & run” 手順を追記。
