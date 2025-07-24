@@ -15,3 +15,4 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token:      ${{ secrets.CLAUDE_GH_TOKEN }}
+          open_pr:           true
