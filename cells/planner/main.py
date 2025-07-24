@@ -5,11 +5,17 @@ Planning and coordination role for the swarm system.
 """
 
 import os
+import sys
 import asyncio
 from typing import Dict, Any
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 import uvicorn
+
+# Add parent directory to path to import common modules
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from common.memory import Memory
 
 app = FastAPI(title="Planner Cell", version="0.1.0")
 
@@ -20,6 +26,14 @@ planner_state = {
     "last_plan": None,
     "connected_cells": []
 }
+
+# Initialize memory instance
+memory = Memory()
+
+# Pydantic models for memory API
+class MemoryRequest(BaseModel):
+    id: str
+    data: Any
 
 @app.get("/")
 async def root():
@@ -58,6 +72,31 @@ async def get_current_plan():
         raise HTTPException(status_code=404, detail="No active plan")
     
     return planner_state["last_plan"]
+
+# Memory API endpoints
+@app.post("/memory")
+async def store_memory(request: MemoryRequest):
+    """Store data in memory with given ID"""
+    success = memory.put(request.id, request.data)
+    if success:
+        return JSONResponse({"status": "stored", "id": request.id})
+    else:
+        raise HTTPException(status_code=500, detail="Failed to store data")
+
+@app.get("/memory/{id}")
+async def get_memory(id: str):
+    """Retrieve data from memory by ID"""
+    data = memory.get(id)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"No data found for ID: {id}")
+    
+    return {"id": id, "data": data}
+
+@app.get("/memory")
+async def list_memory_ids():
+    """List all memory IDs"""
+    ids = memory.list_ids()
+    return {"ids": ids}
 
 async def planner_loop():
     """Main async loop for planner operations"""

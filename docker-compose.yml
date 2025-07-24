@@ -62,6 +62,15 @@ services:
     depends_on:
       - registry
 
+  # Redis for memory storage
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
   # Runtime services (for local testing)
   planner:
     image: localhost:5003/planner-cell:testtag
@@ -72,6 +81,7 @@ services:
       - ROLE=planner
     depends_on:
       - planner-build
+      - redis
 
   curator:
     image: localhost:5003/curator-cell:testtag
@@ -115,3 +125,4 @@ services:
 
 volumes:
   registry-data:
+  redis-data:
