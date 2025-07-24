@@ -1,0 +1,26 @@
+# Memory API Prompt  (Phase-1)
+
+## 目的
+planner-cell が受け取った charter や会話ログを
+他セルおよび再起動後も共有できるよう
+「最小メモリ API」を実装する。
+
+## 実装
+
+1. cells/common/memory.py
+   - class Memory: Redis (host redis:6379) があれば Redis、
+     無ければ ./data/memory.json に保存。
+   - put(id, data) / get(id) / list_ids()
+
+2. 各セル main.py
+   - Memory を import。
+   - planner-cell: FastAPI エンドポイント
+     • POST /memory {\"id\":<str>, \"data\":<any>}
+     • GET  /memory/{id}
+
+3. tests/e2e/test_memory_api.py
+   - docker compose 経由で planner-cell の API を呼び、
+     POST → GET → assert 同じ JSON を取得。
+
+4. docker-compose.yml
+   - redis:alpine コンテナを追加
