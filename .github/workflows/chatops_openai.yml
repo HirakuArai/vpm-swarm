@@ -22,7 +22,7 @@ jobs:
 
       # 2. 依存ライブラリをインストール
       - name: Install deps
-        run: pip install openai==1.30.5 PyGithub==2.3.0
+        run: pip install "openai>=1.32.0" "PyGithub==2.3.0"
 
       # 3. GPT-4.1 で返信を生成し、コメント & ndjson 保存
       - name: Generate and post reply
