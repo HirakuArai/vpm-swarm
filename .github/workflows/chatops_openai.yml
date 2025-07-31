@@ -1,0 +1,38 @@
+name: GPT4 ChatOps
+on:
+  issue_comment:        {types: [created]}
+  discussion_comment:   {types: [created]}
+
+jobs:
+  reply:
+    if: github.actor != 'openai-bot'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      discussions: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install deps
+        run: pip install openai==1.30.5 PyGithub==2.3.0
+
+      - name: Generate and post reply
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN:   ${{ secrets.OPENAI_GH_TOKEN || env.GITHUB_TOKEN }}
+        run: |
+          python scripts/openai_chatops.py \
+                 --repo "${{ github.repository }}" \
+                 --event "${{ github.event_name }}" \
+                 --payload '${{ toJSON(github.event) }}'
+
+      - name: Commit raw ndjson
+        env:
+          GITHUB_TOKEN: ${{ secrets.OPENAI_GH_TOKEN || env.GITHUB_TOKEN }}
+        run: |
+          git config user.name  "openai-bot"
+          git config user.email "openai-bot@example.com"
+          git add data/raw/*.ndjson
+          git commit -m "chat log $(date -u +%FT%TZ)" || echo "no changes"
+          git push
