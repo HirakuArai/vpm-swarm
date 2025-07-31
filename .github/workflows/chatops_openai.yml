@@ -20,7 +20,7 @@ jobs:
       - name: Generate and post reply
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GITHUB_TOKEN:   ${{ secrets.OPENAI_GH_TOKEN || env.GITHUB_TOKEN }}
+          GITHUB_TOKEN:   ${{ secrets.CLAUDE_GH_TOKEN }}
         run: |
           python scripts/openai_chatops.py \
                  --repo "${{ github.repository }}" \
@@ -29,7 +29,7 @@ jobs:
 
       - name: Commit raw ndjson
         env:
-          GITHUB_TOKEN: ${{ secrets.OPENAI_GH_TOKEN || env.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CLAUDE_GH_TOKEN }}
         run: |
           git config user.name  "openai-bot"
           git config user.email "openai-bot@example.com"
