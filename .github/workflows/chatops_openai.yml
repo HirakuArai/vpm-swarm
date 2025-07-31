@@ -1,38 +1,47 @@
-name: GPT4 ChatOps
+name: GPT-4 ChatOps   # コメント → gpt-4.1 が返信して ndjson を push
+
+#── 1) いまは Issue のコメントだけをトリガにする ────────────────
 on:
-  issue_comment:        {types: [created]}
-  discussion_comment:   {types: [created]}
+  issue_comment:
+    types: [created]     # Discussion は後で対応するため一旦除外
 
 jobs:
   reply:
+    # Bot 自身のコメントでは走らせない
     if: github.actor != 'openai-bot'
+
     runs-on: ubuntu-latest
     permissions:
-      issues: write
-      discussions: write
-      contents: write
+      issues:      write        # 返信コメントを投稿
+      contents:    write        # ndjson を commit / push
+      pull-requests: read       # （将来拡張用）
+
     steps:
+      # 1. リポジトリをチェックアウト
       - uses: actions/checkout@v4
 
+      # 2. 依存ライブラリをインストール
       - name: Install deps
         run: pip install openai==1.30.5 PyGithub==2.3.0
 
+      # 3. GPT-4.1 で返信を生成し、コメント & ndjson 保存
       - name: Generate and post reply
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GITHUB_TOKEN:   ${{ secrets.CLAUDE_GH_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}   # 必須
+          GITHUB_TOKEN:   ${{ secrets.OPENAI_GH_TOKEN || github.token }}
         run: |
           python scripts/openai_chatops.py \
                  --repo "${{ github.repository }}" \
                  --event "${{ github.event_name }}" \
                  --payload '${{ toJSON(github.event) }}'
 
+      # 4. 生成した ndjson を commit / push
       - name: Commit raw ndjson
         env:
-          GITHUB_TOKEN: ${{ secrets.CLAUDE_GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.OPENAI_GH_TOKEN || github.token }}
         run: |
           git config user.name  "openai-bot"
           git config user.email "openai-bot@example.com"
           git add data/raw/*.ndjson
-          git commit -m "chat log $(date -u +%FT%TZ)" || echo "no changes"
+          git diff --cached --quiet || git commit -m "chat log $(date -u +%FT%TZ)"
           git push
